@@ -13,19 +13,6 @@ Este é um sistema de carrinho de compras simples, desenvolvido em React, que pe
 - **Emissão de Nota Fiscal Fictícia** após a compra.
 - **Logout**: Opção para retornar à tela de login.
 
-## Pré-requisitos
-
-Para rodar o projeto localmente, você precisará ter:
-
-- **Node.js** (v12 ou superior) e **npm** instalados.
-- Conhecimento básico de terminal/linha de comando.
-- Navegador moderno como Google Chrome ou Firefox.
-
-## Como Rodar o Projeto
-
-1. **Clone o repositório**:
-   ```bash
-   git clone https://github.com/seu-usuario/seu-repositorio.git
 
 ### Explicações para o Usuário:
 
@@ -36,4 +23,3 @@ Para rodar o projeto localmente, você precisará ter:
 5. **Nota Fiscal**: Explica o conteúdo da nota fiscal que será gerada após a compra.
 6. **Logout**: Detalha como o usuário pode sair do sistema.
 
-Você pode customizar o README conforme o nome do seu repositório ou necessidades específicas do seu projeto. Se precisar de mais alguma alteração, estou à disposição!
