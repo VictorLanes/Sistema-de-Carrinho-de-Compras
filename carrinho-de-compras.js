@@ -7,7 +7,7 @@ const users = {
   useradm: { username: "useradm", password: "admin123!", role: "admin" }
 };
 
-// Definindo os produtos iniciais
+// Produtos iniciais
 const dadosProdutosIniciais = [
   { id: 1, nome: "Maçã", preco: 1.5 },
   { id: 2, nome: "Banana", preco: 1.0 },
@@ -22,15 +22,35 @@ function formatarPreco(preco) {
 }
 
 // Componente da lista de produtos
-function ListaProdutos({ produtos, adicionarAoCarrinho }) {
+function ListaProdutos({ produtos, adicionarAoCarrinho, role, editarProduto, excluirProduto }) {
   return (
     <div>
       <h2>Produtos Disponíveis</h2>
       <ul>
         {produtos.map((produto) => (
           <li key={produto.id}>
-            {produto.nome} - {formatarPreco(produto.preco)}
-            <button className="btn" onClick={() => adicionarAoCarrinho(produto)}>Adicionar ao Carrinho</button>
+            {role === "admin" ? (
+              <>
+                <input
+                  type="text"
+                  value={produto.nome}
+                  onChange={(e) => editarProduto(produto.id, "nome", e.target.value)}
+                />
+                <input
+                  type="number"
+                  value={produto.preco}
+                  onChange={(e) => editarProduto(produto.id, "preco", Number(e.target.value))}
+                />
+                <button className="btn" onClick={() => excluirProduto(produto.id)}>Excluir</button>
+              </>
+            ) : (
+              <>
+                {produto.nome} - {formatarPreco(produto.preco)}
+              </>
+            )}
+            <button className="btn" onClick={() => adicionarAoCarrinho(produto)}>
+              Adicionar ao Carrinho
+            </button>
           </li>
         ))}
       </ul>
@@ -38,14 +58,69 @@ function ListaProdutos({ produtos, adicionarAoCarrinho }) {
   );
 }
 
-// Componente do carrinho
-function Carrinho({ itensCarrinho, removerDoCarrinho, total, finalizarCompra, formaPagamento, setFormaPagamento, role, solicitarAutorizacao }) {
-  const handleFormaPagamentoChange = (e) => {
+// Componente para adicionar novos produtos (somente admin)
+function AdicionarProduto({ adicionarProduto, role }) {
+  const [nome, setNome] = useState("");
+  const [preco, setPreco] = useState(0);
+
+  const handleAdicionar = () => {
     if (role === "admin") {
-      setFormaPagamento(e.target.value);
+      adicionarProduto({ nome, preco });
+      setNome("");
+      setPreco(0);
     } else {
-      solicitarAutorizacao(e.target.value); // Solicita autorização e passa o novo método de pagamento
+      alert("Apenas administradores podem adicionar produtos.");
     }
+  };
+
+  return (
+    role === "admin" && (
+      <div>
+        <h2>Adicionar Novo Produto</h2>
+        <input
+          type="text"
+          placeholder="Nome do Produto"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="Preço"
+          value={preco}
+          onChange={(e) => setPreco(Number(e.target.value))}
+        />
+        <button className="btn" onClick={handleAdicionar}>
+          Adicionar Produto
+        </button>
+      </div>
+    )
+  );
+}
+
+// Botão de salvar para o admin
+function BotaoSalvar({ salvarAlteracoes, role }) {
+  return (
+    role === "admin" && (
+      <button className="btn" onClick={salvarAlteracoes}>
+        Salvar Alterações
+      </button>
+    )
+  );
+}
+
+// Botão de logout
+function BotaoLogout({ fazerLogout }) {
+  return (
+    <button className="btn" onClick={fazerLogout}>
+      Logout
+    </button>
+  );
+}
+
+// Componente do carrinho
+function Carrinho({ itensCarrinho, removerDoCarrinho, total, finalizarCompra, role }) {
+  const handleFinalizarCompra = () => {
+    finalizarCompra();
   };
 
   return (
@@ -55,57 +130,22 @@ function Carrinho({ itensCarrinho, removerDoCarrinho, total, finalizarCompra, fo
         {itensCarrinho.map((item, index) => (
           <li key={index}>
             {item.nome} - {formatarPreco(item.preco)}
-            <button className="btn-remove" onClick={() => removerDoCarrinho(index)}>Remover</button>
+            <button className="btn-remove" onClick={() => removerDoCarrinho(index)}>
+              Remover
+            </button>
           </li>
         ))}
       </ul>
       <h3>Total: {formatarPreco(total)}</h3>
-
-      <div>
-        <label>Forma de Pagamento: </label>
-        <select value={formaPagamento} onChange={handleFormaPagamentoChange}>
-          <option value="credito">Cartão de Crédito</option>
-          <option value="boleto">Boleto</option>
-          <option value="pix">Pix</option>
-          <option value="dinheiro">Dinheiro</option>
-        </select>
-      </div>
-
-      <button className="btn" onClick={finalizarCompra}>Finalizar Compra</button>
-    </div>
-  );
-}
-
-// Componente do caixa para pagamento em dinheiro
-function Caixa({ total, finalizarCompra }) {
-  const [valorRecebido, setValorRecebido] = useState(0);
-  const troco = valorRecebido - total;
-
-  const handleFinalizar = () => {
-    if (valorRecebido >= total) {
-      finalizarCompra(valorRecebido, troco);
-    } else {
-      alert("Valor recebido insuficiente!");
-    }
-  };
-
-  return (
-    <div>
-      <h3>Total a pagar: {formatarPreco(total)}</h3>
-      <label>Valor Recebido: </label>
-      <input
-        type="number"
-        value={valorRecebido}
-        onChange={(e) => setValorRecebido(Number(e.target.value))}
-      />
-      <h4>Troco: {formatarPreco(troco >= 0 ? troco : 0)}</h4>
-      <button className="btn" onClick={handleFinalizar}>Finalizar Compra</button>
+      <button className="btn" onClick={handleFinalizarCompra}>
+        Finalizar Compra
+      </button>
     </div>
   );
 }
 
 // Componente da Nota Fiscal
-function NotaFiscal({ itensCarrinho, total, valorRecebido, troco, voltarAoMenu, voltarAoLogin }) {
+function NotaFiscal({ itensCarrinho, total, voltarAoMenu }) {
   return (
     <div>
       <h2>Nota Fiscal</h2>
@@ -117,47 +157,98 @@ function NotaFiscal({ itensCarrinho, total, valorRecebido, troco, voltarAoMenu, 
         ))}
       </ul>
       <h3>Total: {formatarPreco(total)}</h3>
-      <h3>Valor Pago: {formatarPreco(valorRecebido)}</h3>
-      <h3>Troco: {formatarPreco(troco)}</h3>
-      <button className="btn" onClick={voltarAoMenu}>Voltar ao Menu</button>
-      <button className="btn" onClick={voltarAoLogin}>Logout</button> {/* Botão de Logout */}
+      <button className="btn" onClick={voltarAoMenu}>
+        Nova Venda
+      </button>
     </div>
   );
 }
 
-// Componente de login para autorização
-function LoginModal({ autenticarAdmin, setFormaPagamento, novaFormaPagamento }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+// Componente principal do app
+function App() {
+  const [itensCarrinho, setItensCarrinho] = useState([]);
+  const [produtos, setProdutos] = useState(dadosProdutosIniciais);
+  const [total, setTotal] = useState(0);
+  const [usuario, setUsuario] = useState(null);
+  const [compraFinalizada, setCompraFinalizada] = useState(false);
 
-  const handleLogin = () => {
-    if (username === "useradm" && password === "admin123!") {
-      autenticarAdmin(true);
-      setFormaPagamento(novaFormaPagamento); // Salva a nova forma de pagamento após autorização
-    } else {
-      alert("Credenciais de administrador inválidas!");
-      autenticarAdmin(false);
-    }
+  const adicionarAoCarrinho = (produto) => {
+    setItensCarrinho([...itensCarrinho, produto]);
+    setTotal(total + produto.preco);
+  };
+
+  const adicionarProduto = (novoProduto) => {
+    setProdutos([...produtos, { id: produtos.length + 1, ...novoProduto }]);
+  };
+
+  const editarProduto = (id, campo, valor) => {
+    const novosProdutos = produtos.map((produto) =>
+      produto.id === id ? { ...produto, [campo]: valor } : produto
+    );
+    setProdutos(novosProdutos);
+  };
+
+  const excluirProduto = (id) => {
+    const novosProdutos = produtos.filter((produto) => produto.id !== id);
+    setProdutos(novosProdutos);
+  };
+
+  const salvarAlteracoes = () => {
+    alert("Alterações salvas com sucesso!");
+  };
+
+  const removerDoCarrinho = (index) => {
+    const produtoRemovido = itensCarrinho[index];
+    const novoCarrinho = itensCarrinho.filter((_, i) => i !== index);
+    setItensCarrinho(novoCarrinho);
+    setTotal(total - produtoRemovido.preco);
+  };
+
+  const finalizarCompra = () => {
+    setCompraFinalizada(true); // Marca como finalizada e emite a nota fiscal
+  };
+
+  const fazerLogout = () => {
+    setUsuario(null); // Faz logout e volta à tela de login
+    setItensCarrinho([]); // Limpa o carrinho
+    setTotal(0); // Reseta o total
+    setCompraFinalizada(false); // Reseta o estado de finalização
+  };
+
+  const voltarAoMenu = () => {
+    setItensCarrinho([]); // Limpa o carrinho para uma nova venda
+    setTotal(0); // Reseta o total
+    setCompraFinalizada(false); // Marca como nova venda
   };
 
   return (
-    <div className="modal">
-      <div className="modal-content">
-        <h2>Autorização Necessária</h2>
-        <input
-          type="text"
-          placeholder="Usuário"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button className="btn" onClick={handleLogin}>Autorizar</button>
-      </div>
+    <div className="app-container">
+      <h1>Sistema de Carrinho de Compras</h1>
+      {!usuario ? (
+        <Login autenticarUsuario={setUsuario} />
+      ) : !compraFinalizada ? (
+        <>
+          <ListaProdutos
+            produtos={produtos}
+            adicionarAoCarrinho={adicionarAoCarrinho}
+            role={usuario.role}
+            editarProduto={editarProduto}
+            excluirProduto={excluirProduto}
+          />
+          <AdicionarProduto adicionarProduto={adicionarProduto} role={usuario.role} />
+          <Carrinho
+            itensCarrinho={itensCarrinho}
+            removerDoCarrinho={removerDoCarrinho}
+            total={total}
+            finalizarCompra={finalizarCompra}
+            role={usuario.role}
+          />
+          <BotaoSalvar salvarAlteracoes={salvarAlteracoes} role={usuario.role} />
+          <BotaoLogout fazerLogout={fazerLogout} />
+        </>
+      ) : (
+        <NotaFiscal itensCarrinho={itensCarrinho} total={total} voltarAoMenu={voltarAoMenu} />
+      )}
     </div>
   );
 }
@@ -191,117 +282,9 @@ function Login({ autenticarUsuario }) {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
-      <button className="btn" onClick={handleLogin}>Login</button>
-    </div>
-  );
-}
-
-// Componente principal do app
-function App() {
-  const [itensCarrinho, setItensCarrinho] = useState([]);
-  const [produtos] = useState(dadosProdutosIniciais);
-  const [compraFinalizada, setCompraFinalizada] = useState(false);
-  const [formaPagamento, setFormaPagamento] = useState("credito");
-  const [novaFormaPagamento, setNovaFormaPagamento] = useState(""); // Variável para salvar a nova forma de pagamento
-  const [total, setTotal] = useState(0);
-  const [valorRecebido, setValorRecebido] = useState(0);
-  const [troco, setTroco] = useState(0);
-  const [usuario, setUsuario] = useState(null);
-  const [mostrarAutorizacao, setMostrarAutorizacao] = useState(false);
-  const [adminAutorizado, setAdminAutorizado] = useState(false);
-
-  const adicionarAoCarrinho = (produto) => {
-    setItensCarrinho([...itensCarrinho, produto]);
-    setTotal(total + produto.preco);
-  };
-
-  const removerDoCarrinho = (index) => {
-    const produtoRemovido = itensCarrinho[index];
-    const novoCarrinho = itensCarrinho.filter((_, i) => i !== index);
-    setItensCarrinho(novoCarrinho);
-    setTotal(total - produtoRemovido.preco);
-  };
-
-  const finalizarCompra = () => {
-    setCompraFinalizada(true);
-  };
-
-  const finalizarComDinheiro = (valorRecebido, troco) => {
-    setValorRecebido(valorRecebido);
-    setTroco(troco);
-    setCompraFinalizada(true);
-  };
-
-  const voltarAoMenu = () => {
-    setItensCarrinho([]);
-    setTotal(0);
-    setCompraFinalizada(false);
-    setFormaPagamento("credito");
-  };
-
-  const voltarAoLogin = () => {
-    setUsuario(null); // Faz logout
-    setItensCarrinho([]); // Limpa o carrinho
-    setCompraFinalizada(false); // Reseta o status de finalização de compra
-  };
-
-  const autenticarUsuario = (user) => {
-    setUsuario(user);
-  };
-
-  const solicitarAutorizacao = (novoMetodoPagamento) => {
-    setNovaFormaPagamento(novoMetodoPagamento); // Salva a forma de pagamento que o usuário tentou escolher
-    setMostrarAutorizacao(true); // Mostra o modal de login do admin
-  };
-
-  const autenticarAdmin = (autorizado) => {
-    if (autorizado) {
-      setAdminAutorizado(true);
-      setMostrarAutorizacao(false);
-    } else {
-      setMostrarAutorizacao(false);
-    }
-  };
-
-  return (
-    <div className="app-container">
-      <h1>Sistema de Carrinho de Compras</h1>
-      {!usuario ? (
-        <Login autenticarUsuario={autenticarUsuario} />
-      ) : !compraFinalizada ? (
-        <>
-          <ListaProdutos produtos={produtos} adicionarAoCarrinho={adicionarAoCarrinho} />
-          <Carrinho
-            itensCarrinho={itensCarrinho}
-            removerDoCarrinho={removerDoCarrinho}
-            total={total}
-            finalizarCompra={finalizarCompra}
-            formaPagamento={formaPagamento}
-            setFormaPagamento={setFormaPagamento}
-            role={usuario.role}
-            solicitarAutorizacao={solicitarAutorizacao}
-          />
-          {formaPagamento === "dinheiro" && (
-            <Caixa total={total} finalizarCompra={finalizarComDinheiro} />
-          )}
-        </>
-      ) : (
-        <NotaFiscal
-          itensCarrinho={itensCarrinho}
-          total={total}
-          valorRecebido={valorRecebido}
-          troco={troco}
-          voltarAoMenu={voltarAoMenu}
-          voltarAoLogin={voltarAoLogin} // Passa a função de logout
-        />
-      )}
-      {mostrarAutorizacao && (
-        <LoginModal
-          autenticarAdmin={autenticarAdmin}
-          setFormaPagamento={setFormaPagamento}
-          novaFormaPagamento={novaFormaPagamento}
-        />
-      )}
+      <button className="btn" onClick={handleLogin}>
+        Login
+      </button>
     </div>
   );
 }
