@@ -1,3 +1,7 @@
+# Unicarioca - Desenvolvimento de aplicações móveis
+# Nome: Victor Lanes 
+# Matrtícula: 2018100887
+
 # Sistema de Carrinho de Compras
 
 Este projeto implementa um sistema de carrinho de compras com diferentes níveis de permissão para usuários. O sistema permite que administradores (useradm) possam adicionar, editar e excluir produtos, enquanto os usuários comuns (user) podem apenas selecionar itens e finalizar suas compras.
